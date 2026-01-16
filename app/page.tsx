@@ -132,10 +132,13 @@ export default function Home() {
               <WeatherCard data={weather} />
               {aqi !== null && <AQICard aqi={aqi} />}
               <Forecast list={forecast} />
-              <AIInsight
-                weather={weather.weather[0].description}
-                aqi={aqi}
-              />
+              {aqi !== null && (
+               <AIInsight
+                 weather={weather.weather[0].description}
+                 aqi={aqi}
+                />
+              )}
+  
             </>
           )}
         </div>
