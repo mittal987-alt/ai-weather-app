@@ -1,35 +1,55 @@
-import { ForecastItem } from "@/types/weather";
+import { format } from "date-fns";
+
+type ForecastItem = {
+  dt: number;
+  main: { temp: number };
+  weather: { icon: string }[];
+};
 
 export default function Forecast({ list }: { list: ForecastItem[] }) {
-  const daily = list.filter((item) =>
-    item.dt_txt.includes("12:00:00")
-  );
+  // 1️⃣ Group by date
+  const dailyMap: Record<string, ForecastItem[]> = {};
+
+  list.forEach((item) => {
+    const date = format(new Date(item.dt * 1000), "yyyy-MM-dd");
+    if (!dailyMap[date]) dailyMap[date] = [];
+    dailyMap[date].push(item);
+  });
+
+  // 2️⃣ Convert to daily forecast
+  const dailyForecast = Object.entries(dailyMap)
+    .slice(0, 5)
+    .map(([date, items]) => {
+      const temps = items.map((i) => i.main.temp);
+
+      return {
+        day: format(new Date(date), "EEE"),
+        min: Math.min(...temps),
+        max: Math.max(...temps),
+        icon: items[Math.floor(items.length / 2)].weather[0].icon,
+      };
+    });
 
   return (
     <div>
-      <h3 className="text-xl font-semibold mb-3">5-Day Forecast</h3>
+      <h3 className="text-lg font-semibold mb-4">5-Day Forecast</h3>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {daily.map((day) => (
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        {dailyForecast.map((day, i) => (
           <div
-            key={day.dt_txt}
-            className="bg-slate-900/60 p-4 rounded-2xl text-center hover:scale-105 transition"
+            key={i}
+            className="bg-white/5 rounded-2xl p-4 text-center"
           >
-            <p className="text-sm text-slate-300">
-              {new Date(day.dt_txt).toLocaleDateString("en-IN", {
-                weekday: "short",
-              })}
-            </p>
+            <p className="mb-2">{day.day}</p>
 
             <img
-              className="mx-auto my-2"
-              src={`https://openweathermap.org/img/wn/${day.weather[0].icon}.png`}
+              src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
               alt=""
+              className="mx-auto"
             />
 
-            <p className="font-medium">
-              {Math.round(day.main.temp_min)}° /{" "}
-              {Math.round(day.main.temp_max)}°
+            <p className="mt-2 font-medium">
+              {Math.round(day.min)}° / {Math.round(day.max)}°
             </p>
           </div>
         ))}
